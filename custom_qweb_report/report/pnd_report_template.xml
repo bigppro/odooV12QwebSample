@@ -1,0 +1,107 @@
+<odoo>
+
+    <record id="paperformat_pnd_report" model="report.paperformat">
+        <field name="name">paperformat.pnd.report</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_width">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">0</field>
+        <field name="margin_right">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <report
+            id="pnd_report"
+            model="sale.order"
+            string="PND Qweb Test Report"
+            report_type="qweb-pdf"
+            name="custom_qweb_report.pnd_report_view"
+            paperformat="paperformat_pnd_report"
+    />
+
+    <template id="pnd_report_view">
+        <t t-call="web.html_container">
+            <!-- i ไว้ใช้วนลูป ไม่ต้องแก้ไขอะไร -->
+            <t t-set="i" t-value="0" />
+            <!-- record_per_page จำนวน record ในแต่ละหน้า ตาม form ให้เป็น 5 -->
+            <t t-set="record_per_page" t-value="5" />
+            <!-- page_amount จำนวนหน้าทั้งหมด ไว้สำหรับแสดงเลขหน้า -->
+            <t t-set="page_amount" t-value="1" />
+            <t t-if="len(docs.order_line) > record_per_page">
+                <t t-set="page_amount" t-value="len(docs.order_line) / record_per_page" />
+                <t t-if="page_amount > int(page_amount)">
+                    <t t-set="page_amount" t-value="page_amount + 1" />
+                </t>
+            </t>
+            <!-- current_page หน้าปัจจุบัน ไว้สำหรับแสดงเลขหน้า -->
+            <t t-set="current_page" t-value="0" />
+            <!-- ลูปใหญ่ วนตามจำนวนหน้าทั้งหมดที่จะถูกปริ้นออกมา -->
+            <t t-foreach="range(int(page_amount))" t-as="rpa">
+                <t t-set="current_page" t-value="current_page + 1" />
+                <div class="article" >
+                    <div class="row">
+                        <div class="page_number" style="position: absolute; z-index: 120; right: 85px; top: 85px;">
+                            <t t-esc="current_page" />
+                            <span style="padding-left: 75px;" />
+                            <t t-esc="int(page_amount)" />
+                        </div>
+                        <t t-set="j" t-value="i + record_per_page" />
+                        <t t-set="item_count" t-value="0" />
+
+                        <!-- ลูปย่อย ที่ไว้สำหรับใส่ข้อมูลของแต่ละหน้า -->
+                        <t t-foreach="docs.order_line[i:j]" t-as="doc">
+                            <div style="position:relative; z-index: 100;">
+                                <!-- ตำแหน่งเริ่มของ record แรกไล่ลงไปเรื่อยจนครบ 5 ข้อมูล -->
+                                <table t-attf-style="position:absolute; left: 100px; top: {{210 + (item_count*105)}}px;">
+                                    <tbody>
+                                        <!-- ใช้ tr td ในการจัดรูปแบบข้อมูลของแต่ละช่อง -->
+                                        <tr>
+                                            <td>
+                                                <t t-esc="doc.name" />
+                                            </td>
+                                        </tr>
+
+                                        <!-- ไว้ทำ amount_total ของแต่ละหน้า -->
+                                        <!-- กรณีข้อมูล ครบ 5 record -->
+                                        <t t-if="(item_count+1 >= 5) and len(docs.order_line[i:j]) == 5">
+                                            <tr>
+                                                <td>
+                                                    Amount total
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <!-- กรณีเป็นหน้าสุดท้าย แต่ข้อมูลไม่ครบ 5 record -->
+                                        <t t-if="len(docs.order_line[i:j]) &lt; 5 and ((item_count+1) == len(docs.order_line[i:j]))">
+                                            <tr>
+                                                <td>
+                                                    Amount total
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <!-- END amount_total -->
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <t t-set="item_count" t-value="item_count+1" />
+                        </t>
+                        <!-- จบลูปย่อย -->
+
+                        <img src="/custom_qweb_report/static/img/PND53.png" style="position:absolute; z-index: -9999; width: 100%;" />
+                    </div>
+                </div>
+                <t t-set="i" t-value="i + record_per_page" />
+            </t>
+            <!-- จบลูปใหญ่ -->
+
+        </t>
+    </template>
+
+</odoo>

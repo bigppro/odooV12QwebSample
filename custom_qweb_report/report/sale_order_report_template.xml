@@ -1,0 +1,122 @@
+<odoo>
+
+    <record id="paperformat_sale_order_report" model="report.paperformat">
+        <field name="name">paperformat.sale.order.report</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_width">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">40</field>
+        <field name="margin_right">5</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">5</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">40</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <report
+            id="sale_order_report"
+            model="sale.order"
+            string="Sale Order Qweb Test Report"
+            report_type="qweb-pdf"
+            name="custom_qweb_report.sale_order_report_view"
+            paperformat="paperformat_sale_order_report"
+    />
+
+    <template id="sale_order_report_view">
+        <t t-call="web.html_container">
+            <div class="header" style="border-bottom: 2px solid black">
+                <img src="/custom_qweb_report/static/img/RICH.jpg" width="200px" height="100px" />
+                <!-- รูปภาพให้ลิ้งโดยใช้เป็น absolute path แบบตัวอย่างข้างบน
+                    เรียกไล่ไปตั้งแต่ root ของไฟล์ module นี้
+                    /module_name/path/to/img/file
+                 -->
+                <h3 class="text-center">รายงานการขาย</h3>
+            </div>
+            <t t-foreach="docs" t-as="doc">
+                <!-- docs ถูกส่งมาจากไฟล์ sale_order_report.py ในส่วนของ return จะส่งข้อมูลทั้งชุดของ sale order มาที่หน้านี้ -->
+                <t t-esc="doc.partner_id.name" />
+                <div class="article">
+                    <!-- ใช้เป็น class='article' wkhtmltopdf จะเห็น  layout ได้ตรงตาม bootstrap class (ตรงนี้ไม่แน่ใจเหมือนกัน ว่ามีปัญหากับเวอร์ชันไหนบ้าง
+                    แต่ ver. ที่ใช้อยู่ 0.12.1 ใช้เป็น 'article' แล้วปริ้นได้) -->
+                    <table class="table table-bordered" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Product</th>
+                                <th>Description</th>
+                                <th>Ordered Qty</th>
+                                <th>Delivered Qty</th>
+                                <th>Unit Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="row_count" t-value="0" />
+                            <!-- การประกาศตัวแปรใน report ใช้เป็น
+                            t-set="ชื่อตัวแปร" t-value="ค่าของตัวแปร"
+                             -->
+                            <t t-foreach="doc.order_line" t-as="line">
+                                <!--
+                                    ข้อมูลในตารางที่หน้า sale order อยู่ในตัวแปร order_line ซึ่งส่งข้อมูลมาเป็นชุด
+                                    ต้องเอามาลูปด้วย t-foreach เพื่อดึงข้อมูลรายตัว
+                                 -->
+                                <tr>
+                                    <td style="text-center">
+                                        <t t-set="row_count" t-value="row_count + 1" />
+                                        <t t-esc="row_count" />
+                                    </td>
+                                    <td style="text-center">
+                                        <t t-esc="line.product_id.name" />
+                                    </td>
+                                    <td style="text-center">
+                                        <span t-field="line.name" />
+                                    </td>
+                                    <td>
+                                        <t t-esc="'{:.0f}'.format(line.product_uom_qty)" />
+                                    </td>
+                                    <td>
+                                        <t t-esc="'{:.0f}'.format(line.qty_invoiced)" />
+                                    </td>
+                                    <td>
+                                        <t t-esc="'{:,.2f}'.format(line.price_unit)"  />
+                                    </td>
+                                    <!--
+                                    ใช้ {:.2f} เพื่อกำหนด format สำหรับตัวเลข
+                                    หาข้อมูลเพิ่มเติม 'Python String Formatting'
+                                     -->
+                                </tr>
+                            </t>
+                            <!--
+                                ปิด tag </t> จาก t-foreach ตรงนี้
+                                t-foreach ของ order_line เอาใช้วนเฉพาะส่วนของ tbody
+                                หรือข้อมูลภายในตาราง
+                            -->
+
+                            <!--
+                                class 'text-center' 'text-right' 'table' 'table-bordered'
+                                ให้เรียกใช้โดยตรงได้เลย เพราะ odoo based on Bootstrap 3 อยู่แล้ว
+                                ถ้าต้องการใช้ class ไหนในการตกแต่ง layout เพิ่มเติม
+                                หาข้อมูลได้ที่เว็บ bootstrap โดยตรง
+                            -->
+                            <tfoot>
+                                <tr >
+                                    <td colspan="6" class="text-right">
+                                        <font id="amount_total"><t t-esc="'{:,.2f}'.format(doc.amount_total)" /></font>
+                                    </td>
+                                </tr>
+                                <tr>
+                                   <td colspan="6" class="text-right">
+                                       <t t-esc="thaibahttext" />
+                                   </td>
+                                </tr>
+                            </tfoot>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

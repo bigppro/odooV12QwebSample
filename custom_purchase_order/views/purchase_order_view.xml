@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+        <data>
+
+            <record model="ir.ui.view" id="purchase_order_form_inherit">
+              <field name="name">purchase.order.form.inherit</field>
+              <field name="model">purchase.order</field>
+              <field name='inherit_id' ref='purchase.purchase_order_form'/>
+              <field name="arch" type="xml">
+                <notebook position='inside'>
+                  <page string='Purchase Partner'>
+                    <group>
+                      <field name='partner_name' />
+                      <field name='contact_person'
+                             domain="[('id', 'child_of', partner_name), ('parent_id', '!=', False)]"
+                             context="{'show_only_child': True}"
+                             options='{"always_reload": True}'/>
+                    </group>
+                  </page>
+                </notebook>
+              </field>
+            </record>
+
+        </data>
+</odoo>
